@@ -1,0 +1,4 @@
+FROM openjdk:21
+WORKDIR project
+COPY ./artifact/chat.jar .
+CMD ["java","-jar","chat.jar"]

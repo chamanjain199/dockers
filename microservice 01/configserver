@@ -1,0 +1,4 @@
+FROM openjdk:21
+WORKDIR project
+COPY ./artifact/configserver.jar .
+CMD ["java","-jar","configserver.jar"]

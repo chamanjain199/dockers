@@ -1,0 +1,4 @@
+FROM openjdk:21
+WORKDIR project
+COPY ./artifact/gateway.jar .
+CMD ["java","-jar","gateway.jar"]

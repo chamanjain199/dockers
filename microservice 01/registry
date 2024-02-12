@@ -1,0 +1,4 @@
+FROM openjdk:21
+WORKDIR project
+COPY ./artifact/registry.jar .
+CMD ["java","-jar","registry.jar"]

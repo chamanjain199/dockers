@@ -1,0 +1,116 @@
+version: "3.8"
+
+services:
+    rabbitmq:
+        image: rabbitmq:3.12-management
+        ports:
+           - '5672:5672'
+           - '15672:15672'
+    redis:
+        image: redis
+        ports:
+           - '6379:6379'
+
+    hazelcast:
+        image: hazelcast/hazelcast:5.3.6
+        environment:
+            HZ_NETWORK_PUBLICADDRESS: 172.27.48.1:5701
+            HZ_CLUSTERNAME: hello-world
+        ports:
+           - '5701:5701'
+        
+    hazelcast_management:
+        image: hazelcast/management-center:latest-snapshot
+        environment:
+            HZ_NETWORK_PUBLICADDRESS: 172.27.48.1:5701
+            HZ_CLUSTERNAME: hello-world
+        ports:
+           - '9097:8080'
+           
+    registry:
+        build:
+            context: ./
+            dockerfile: registry
+        environment:
+            CONFIG_SERVER_HOST: configserver
+        ports:
+           - '8761:8761'
+         
+    configserver:
+        build:
+            context: ./
+            dockerfile: configserver
+        environment:
+            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry:8761/eureka/
+            SPRING_RABBITMQ_HOST: rabbitmq 
+        ports:
+           - '8888:8888'
+        depends_on:
+            - registry
+           
+    gateway:
+        build:
+            context: ./
+            dockerfile: gateway
+        environment:
+            CONFIG_SERVER_HOST: configserver
+            REDIS_HOST: redis
+            EUREKA_HOST: registry
+            RABBIT_MQ_HOST: rabbitmq
+            KEYCLOAK_HOST: host.docker.internal
+        ports:
+           - '8091:8091'
+        depends_on:
+            - configserver
+       
+    auth:
+        build:
+            context: ./
+            dockerfile: auth
+        environment:
+            CONFIG_SERVER_HOST: configserver
+            REDIS_HOST: redis
+            EUREKA_HOST: registry
+            RABBIT_MQ_HOST: rabbitmq
+            PHOTO_LOCATION: /images
+            DB_HOST: host.docker.internal
+        volumes:
+           - E:/Projects/angular/:/images
+        ports:
+           - '8081:8081'
+        depends_on:
+            - configserver
+       
+    post:
+        build:
+            context: ./
+            dockerfile: post
+        environment:
+            CONFIG_SERVER_HOST: configserver
+            REDIS_HOST: redis
+            EUREKA_HOST: registry
+            RABBIT_MQ_HOST: rabbitmq
+            POST_LOCATION: /post
+            DB_HOST: host.docker.internal
+        volumes:
+            - E:/Projects/angular/:/post
+        ports:
+           - '8082:8082'
+        depends_on:
+            - configserver
+            
+    chat:
+        build:
+            context: ./
+            dockerfile: chat
+        environment:
+            CONFIG_SERVER_HOST: configserver
+            REDIS_HOST: redis
+            EUREKA_HOST: registry
+            RABBIT_MQ_HOST: rabbitmq
+            DB_HOST: host.docker.internal
+        ports:
+           - '8086:8086'
+        depends_on:
+            - configserver
+            

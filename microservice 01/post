@@ -1,0 +1,4 @@
+FROM openjdk:21
+WORKDIR project
+COPY ./artifact/post.jar .
+CMD ["java","-jar","post.jar"]

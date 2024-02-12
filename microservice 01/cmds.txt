@@ -1,0 +1,54 @@
+Run spring boot jar with postgres 
+
+docker build -t first:latest -f first .
+docker run -p 8080:9090 --name first_app  --network first first
+
+docker network connect <network_name_or_id> <container_name_or_id>
+docker network connect first first
+
+
+docker run -p 5431:5432 --network first  --name postgresdb -e POSTGRES_PASSWORD=postgres -e PGDATA=/var/lib/postgresql/data/pgdata -e POSTGRES_USER=postgres -e POSTGRES_DB=sharethings   -v D:/data:/var/lib/postgresql/data  postgres
+
+docker network connect first postgresdb
+
+
+=============
+with docker compose
+
+
+
+=================
+
+microserices
+
+docker run --name rabbitmq   --network micro -p 5672:5672 -p 15672:15672 -d rabbitmq:3.12-management
+docker run --name redis      --network micro -p 6379:6379 -d redis
+docker run --name hazelcast  --network micro -p 5701:5701 -e HZ_NETWORK_PUBLICADDRESS=172.27.48.1:5701 -e HZ_CLUSTERNAME=hello-world -d hazelcast/hazelcast:5.3.6
+
+
+docker build  -t registry:latest -f registry .
+
+docker build  -t configserver:latest -f configserver .
+
+docker build  -t gateway:latest -f gateway .
+
+docker build  -t auth:latest -f auth .
+
+docker build  -t post:latest -f post .
+
+docker build  -t chat:latest -f chat .
+
+
+
+
+docker run --name configserver --network micro -p 8888:8888 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://registry:8761/eureka/  -e SPRING_RABBITMQ_HOST=rabbitmq  configserver
+
+docker run --name registry     --network micro -p 8761:8761 -e CONFIG_SERVER_HOST=configserver registry
+
+docker run --name gateway      --network micro -p 8091:8091 -e CONFIG_SERVER_HOST=configserver -e REDIS_HOST=redis -e EUREKA_HOST=registry  -e RABBIT_MQ_HOST=rabbitmq  -e KEYCLOAK_HOST=host.docker.internal gateway
+
+docker run --name auth         --network micro -p 8081:8081 -e REDIS_HOST=redis -e CONFIG_SERVER_HOST=configserver  -e PHOTO_LOCATION=/images -e EUREKA_HOST=registry -e DB_HOST=host.docker.internal -e RABBIT_MQ_HOST=rabbitmq  auth
+
+docker run --name chat         --network micro -p 8086:8086 -e REDIS_HOST=redis -e CONFIG_SERVER_HOST=configserver  -e EUREKA_HOST=registry -e DB_HOST=host.docker.internal -e RABBIT_MQ_HOST=rabbitmq  chat
+
+docker run --name post         --network micro -p 8082:8082 -e REDIS_HOST=redis -e CONFIG_SERVER_HOST=configserver  -e POST_LOCATION=/post -e EUREKA_HOST=registry -e DB_HOST=host.docker.internal -e RABBIT_MQ_HOST=rabbitmq  post

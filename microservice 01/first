@@ -1,0 +1,5 @@
+FROM openjdk:21
+WORKDIR project
+#ENV SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/sharethings"
+COPY ./artifact/things.jar .
+CMD ["java","-jar","things.jar"]

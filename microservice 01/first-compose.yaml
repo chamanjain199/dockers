@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+    postgresdb_compose:
+        image: postgres:latest
+        environment:
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+            PGDATA: /var/lib/postgresql/data/pgdata
+            POSTGRES_DB: sharethings 
+        volumes:
+            - D:/datar:/var/lib/postgresql/data
+        ports:
+           - '5431:5432'
+    first_app_compose:
+        build:
+            context: ./
+            dockerfile: first
+        environment:
+            DB_HOST: postgresdb_compose
+        ports:
+           - '8080:9090'
+        depends_on:
+            - postgresdb_compose
